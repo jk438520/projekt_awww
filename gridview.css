@@ -1,0 +1,103 @@
+html {
+    height: 100%;
+
+}
+
+body {
+    margin: 0;
+    height: 100%;
+    display: grid;
+    grid-template-rows: 50px 3fr 50px 1fr;
+    grid-template-columns: 300px 5fr 2fr;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+
+
+.choiceBar {
+    display: flex;
+    align-content: stretch;
+    flex-direction: row;
+    height: 50px;
+    background-color: #333;
+}
+
+.navBar {
+    grid-column: 1/4;
+}
+
+.choiceBar ul {
+    display: flex;
+    align-items: stretch;
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background-color: #333;
+}
+
+.choiceBar ul li {
+    display: flex;
+    align-items: stretch;
+    float: left;
+}
+
+.choiceBar ul li a {
+    display: flex;
+    color: white;
+    align-items: center;
+    padding: 14px;
+    text-decoration: none;
+}
+
+.choiceBar ul li a:hover {
+    background-color: #111;
+}
+
+.fileMenu {
+    grid-column: 1/2;
+    grid-row:2/5;
+    background-color: #e8e8e8;
+    border-right-width: 5px;
+    border-right-style: solid;
+    border-right-color: DarkGray;
+}
+
+.editor {
+    grid-column: 2/3;
+    grid-row: 2/3;
+    background-color: #e8e8e8;
+    overflow-x:scroll;
+    overflow-y:scroll;
+}
+
+.codeSnippet {
+    grid-column: 3/4;
+    grid-row: 2;
+    border-left-color: DarkGray;
+    border-left-width: 5px;
+    border-left-style: solid;
+    background-color: #e8e8e8;
+}
+
+.tabChoice {
+    grid-column: 2/4;
+    grid-row: 3/4;
+}
+
+.tabMenu {
+    grid-column: 2/4;
+    grid-row: 4/5;
+    background-color: #e8e8e8;
+    overflow-x:scroll;
+    overflow-y:scroll;
+}
+
+.tabMenu .tab {
+    display:none;
+
+}
+
+#tab1 {
+    display:block;
+}

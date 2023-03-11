@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <link rel="stylesheet" href="gridview.css">
+</head>
+<body>
+<div class="navBar choiceBar">
+    <ul>
+        <li><a>File</a></li>
+        <li><a>Edit</a></li>
+        <li><a>View</a></li>
+        <li><a>Run</a></li>
+    </ul>
+</div>
+<div class="fileMenu">
+    <ul>
+        <li>some_rpis_file.py</li>
+    </ul>
+</div>
+<div class="editor">
+    <pre>
+        <code class="language-python">
+import numpy as np
+import numpy as np
+from scipy.stats import chisquare
+
+# Rows: women, men
+# Columns: PiS, PO, Kukiz, Nowoczesna, Lewica, PSL, Razem, KORWiN
+data = np.array([[ 17508, 11642,  3308,  3131,  2911,  2205,  1852, 1235],
+ [ 17672,  9318,  4865,  3259,  3029,  2479,  1606, 3259]])
+
+def get_S_val(data):
+    N = data.sum()
+    rTotals = data.sum(axis = 1)
+    cTotals = data.sum(axis = 0)
+    f = np.outer(rTotals, cTotals)/N
+    return np.sum((f-data)**2/f)
+
+def chi2(data):
+    cTotals = data.sum(axis = 0)
+    E = np.array([cTotals, cTotals])/2
+    return ((data - E)**2/E).sum()
+
+def agr_low_p(data, p):
+    # Wiem, że pewnie da się to zrobić jedną linijką w numpy, ale nie umiem.
+    N = data.sum()
+    squishGender = data.sum(axis=0)
+    menBucket = 0
+    womenBucket = 0
+    outputMen = np.array([])
+    outputWomen = np.array([])
+
+    for i in range(np.size(data, 1)):
+        if squishGender[i] < N * p:
+            womenBucket += data[0][i]
+            menBucket += data[1][i]
+        else:
+            outputWomen = np.append(outputWomen, data[0][i])
+            outputMen = np.append(outputMen, data[1][i])
+    outputWomen = np.append(outputWomen, womenBucket)
+    outputMen = np.append(outputMen, menBucket)
+    return np.array([outputWomen, outputMen])
+
+dataKorwinLess = np.delete(data, -1, axis = 1)
+
+print("S wartość dla całych danych: ", get_S_val(data))
+print("S wartość dla danych bez KORWIN: ", get_S_val(dataKorwinLess))
+print("S wartość dla danych z agregowanymi mniejszościami poniżej 5%:", get_S_val(agr_low_p(data, 0.05)))
+# tylko jedna partia zdobyła poniżej 5% więc wynik jest taki sam
+print("S wartość dla danych z agregowanymi mniejszościami poniżej 6%:", get_S_val(agr_low_p(data, 0.06)))
+
+print("chi2 dla całych danych: ", chi2(data))
+print("chi2 dla danych bez KORWIN: ", chi2(dataKorwinLess))
+print("chi2 dla danych z agregowanymi mniejszościami poniżej 5%:", chi2(agr_low_p(data, 0.05)))
+print("chi2 dla danych z agregowanymi mniejszościami poniżej 6%:", chi2(agr_low_p(data, 0.06)))
+
+# Wyniki dla testu S-value i chi2 są bardzo zbliżone.
+
+
+        </code>
+    </pre>
+</div>
+<div class="codeSnippet">
+    <pre>
+        <code class="language-python">
+def agr_low_p(data, p):
+# Wiem, że pewnie da się to zrobić jedną linijką w numpy, ale nie umiem.
+N = data.sum()
+squishGender = data.sum(axis=0)
+menBucket = 0
+womenBucket = 0
+outputMen = np.array([])
+outputWomen = np.array([])
+
+for i in range(np.size(data, 1)):
+    if squishGender[i] < N * p:
+        womenBucket += data[0][i]
+        menBucket += data[1][i]
+    else:
+        outputWomen = np.append(outputWomen, data[0][i])
+        outputMen = np.append(outputMen, data[1][i])
+outputWomen = np.append(outputWomen, womenBucket)
+outputMen = np.append(outputMen, menBucket)
+return np.array([outputWomen, outputMen])
+        </code>
+    </pre>
+</div>
+<div class="tabChoice choiceBar">
+    <ul>
+        <li><a id="tab1_button" onclick="openTab('tab1')">Tab1</a></li>
+        <li><a id="tab2_button" onclick="openTab('tab2')">Tab2</a></li>
+        <li><a id="tab3_button" onclick="openTab('tab3')">Tab3</a></li>
+        <li><a id="tab4_button" onclick="openTab('tab4')">Tab4</a></li>
+    </ul>
+</div>
+<div class="tabMenu">
+    <div id="tab1" class="tab">
+        <h1>Tab1</h1>
+        <p>Tab1 content</p>
+    </div>
+    <div id="tab2" class="tab">
+        <h1>Tab2</h1>
+        <p>Tab2 content</p>
+    </div>
+    <div id="tab3" class="tab">
+        <h1>Tab3</h1>
+        <p>Tab3 content</p>
+    </div>
+    <div id="tab4" class="tab">
+        <h1>Tab4</h1>
+        <p>Tab4 content</p>
+        <p>But here is enough text to make it scrollable</p>
+        <p>But here is enough text to make it scrollable</p>
+        <p>But here is enough text to make it scrollable</p>
+        <p>But here is enough text to make it scrollable</p>
+        <p>But here is enough text to make it scrollable</p>
+    </div>
+</div>
+<script>
+    function openTab(tabNumber) {
+        var i;
+        var x = document.getElementsByClassName("tab");
+        for (i = 0; i < x.length; i++) {
+            x[i].style.display = "none";
+        }
+        document.getElementById(tabNumber).style.display = "block";
+    }
+</script>
+
+</body>
+</html>
