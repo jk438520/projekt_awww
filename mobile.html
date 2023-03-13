@@ -3,20 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <title>Title</title>
-    <link rel="stylesheet" href="gridview.css">
+    <link rel="stylesheet" href="mobile.css">
 </head>
-<body>
-<div class="navBar choiceBar">
+<body class="dark-theme">
+<div class="navBar topNavBar buttonBar">
     <ul>
         <li><a>File</a></li>
         <li><a>Edit</a></li>
         <li><a>View</a></li>
         <li><a>Run</a></li>
-    </ul>
-</div>
-<div class="fileMenu">
-    <ul>
-        <li>some_rpis_file.py</li>
     </ul>
 </div>
 <div class="editor">
@@ -107,16 +102,21 @@ return np.array([outputWomen, outputMen])
         </code>
     </pre>
 </div>
-<div class="tabChoice choiceBar">
+<div class="fileMenu bottomWindow">
     <ul>
-        <li><a id="tab1_button" class="mobileButton desktopButton" onclick="openTab('tab1')">Tab1</a></li>
-        <li><a id="tab2_button" class="mobileButton desktopButton" onclick="openTab('tab2')">Tab2</a></li>
-        <li><a id="tab3_button" class="mobileButton desktopButton" onclick="openTab('tab3')">Tab3</a></li>
-        <li><a id="tab4_button" class="mobileButton desktopButton" onclick="openTab('tab4')">Tab4</a></li>
-        <li><a id="code_snippet_button" class="mobileButton" onclick="openCodeSnippet()">CodeSnippet</a></li>
+        <li>some_rpis_file.py</li>
     </ul>
 </div>
-<div class="tabMenu">
+
+<div class="buttonBar bottomNavBar">
+    <ul>
+        <li><a class="desktopButton" onclick="openTab('tab', 'tab1')">Tab1</a></li>
+        <li><a class="desktopButton" onclick="openTab('tab', 'tab2')">Tab2</a></li>
+        <li><a class="desktopButton" onclick="openTab('tab', 'tab3')">Tab3</a></li>
+        <li><a class="desktopButton" onclick="openTab('tab', 'tab4')">Tab4</a></li>
+    </ul>
+</div>
+<div class="tabContainer">
     <div id="tab1" class="tab">
         <h1>Tab1</h1>
         <p>Tab1 content</p>
@@ -139,20 +139,6 @@ return np.array([outputWomen, outputMen])
         <p>But here is enough text to make it scrollable</p>
     </div>
 </div>
-<script>
-    function openTab(tabClass, tabID) {
-        var i;
-        var x = document.getElementsByClassName(tabClass);
-        for (i = 0; i < x.length; i++) {
-            x[i].style.display = "none";
-        }
-        document.getElementById(tabID).style.display = "block";
-    }
-
-
-
-
-</script>
-
+<script src="mobile.js"></script>
 </body>
 </html>
