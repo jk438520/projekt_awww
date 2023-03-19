@@ -6,7 +6,7 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="dark-theme">
-<div class="navBar topNavBar buttonBar">
+<div class="topNavBar buttonBar">
     <ul>
         <li><a>File</a></li>
         <li><a>Edit</a></li>
@@ -46,7 +46,7 @@ def agr_low_p(data, p):
     outputWomen = np.array([])
 
     for i in range(np.size(data, 1)):
-        if squishGender[i] < N * p:
+        if squishGender[i] &lt N * p:
             womenBucket += data[0][i]
             menBucket += data[1][i]
         else:
@@ -86,7 +86,7 @@ outputMen = np.array([])
 outputWomen = np.array([])
 
 for i in range(np.size(data, 1)):
-    if squishGender[i] < N * p:
+    if squishGender[i] &lt N * p:
         womenBucket += data[0][i]
         menBucket += data[1][i]
     else:
@@ -98,7 +98,7 @@ return np.array([outputWomen, outputMen])
         </code>
     </pre>
 </div>
-<div class="fileMenu bottomWindow">
+<div class="fileMenu">
     <ul>
         <li>some_rpis_file.py</li>
     </ul>
@@ -106,10 +106,10 @@ return np.array([outputWomen, outputMen])
 
 <div class="buttonBar bottomNavBar">
     <ul>
-        <li><a class="desktopButton" onclick="openTab('tab', 'tab1')">Tab1</a></li>
-        <li><a class="desktopButton" onclick="openTab('tab', 'tab2')">Tab2</a></li>
-        <li><a class="desktopButton" onclick="openTab('tab', 'tab3')">Tab3</a></li>
-        <li><a class="desktopButton" onclick="openTab('tab', 'tab4')">Tab4</a></li>
+        <li><a onclick="openTab('tab', 'tab1')">Tab1</a></li>
+        <li><a onclick="openTab('tab', 'tab2')">Tab2</a></li>
+        <li><a onclick="openTab('tab', 'tab3')">Tab3</a></li>
+        <li><a onclick="openTab('tab', 'tab4')">Tab4</a></li>
     </ul>
 </div>
 <div class="tabContainer">
@@ -128,27 +128,27 @@ return np.array([outputWomen, outputMen])
     <div id="tab4" class="tab">
         <h1>Tab4</h1>
         <p>Tab4 content</p>
-        But here is enough<br>
-        But here is enough<br>
-        But here is enough<br>
-        But here is enough<br>
-        But here is enough<br>
-        But here is enough<br>
-        But here is enough<br>
-        But here is enough<br>
-        But here is enough<br>
-        But here is enough<br>
-        But here is enough<br>
-        But here is enough<br>
-        But here is enough<br>
-        But here is enough<br>
-        But here is enough<br>
-        But here is enough<br>
-        But here is enough<br>
-        But here is enough<br>
-        But here is enough<br>
-        But here is enough<br>
-        But here is enough<br>
+        But here is enough text to make it scrollable<br>
+        But here is enough text to make it scrollable<br>
+        But here is enough text to make it scrollable<br>
+        But here is enough text to make it scrollable<br>
+        But here is enough text to make it scrollable<br>
+        But here is enough text to make it scrollable<br>
+        But here is enough text to make it scrollable<br>
+        But here is enough text to make it scrollable<br>
+        But here is enough text to make it scrollable<br>
+        But here is enough text to make it scrollable<br>
+        But here is enough text to make it scrollable<br>
+        But here is enough text to make it scrollable<br>
+        But here is enough text to make it scrollable<br>
+        But here is enough text to make it scrollable<br>
+        But here is enough text to make it scrollable<br>
+        But here is enough text to make it scrollable<br>
+        But here is enough text to make it scrollable<br>
+        But here is enough text to make it scrollable<br>
+        But here is enough text to make it scrollable<br>
+        But here is enough text to make it scrollable<br>
+        But here is enough text to make it scrollable<br>
     </div>
 </div>
 <script src="openTab.js"></script>
