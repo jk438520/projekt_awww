@@ -1,0 +1,17 @@
+<li class="FileSystemObject">
+
+    <div class="fileSystemObjectBar">
+        <a class="directoryName">{{ file_system_object.name }}</a>
+        <a type='additionButton' href="{% url 'web_ide:add_file' file_system_object.pk %}">[+F]</a>
+        <a type="additionButton" href="{% url 'web_ide:add_directory' file_system_object.pk %}">[+D]</a>
+        {% include "web_ide/delete_button.html" with file_system_object=file_system_object %}
+    </div>
+    <ul>
+        {% for child in file_system_object.children_directories %}
+            {% include "web_ide/directory_in_menu.html" with file_system_object=child %}
+        {% endfor %}
+        {% for child in file_system_object.children_files %}
+            {% include "web_ide/file_in_menu.html" with file_system_object=child %}
+        {% endfor %}
+    </ul>
+</li>

@@ -1,0 +1,27 @@
+body {
+    display: grid;
+    grid-template-rows: 50px 1fr;
+    grid-template-columns: 1fr;
+}
+
+
+.addFile {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+
+}
+
+.createFile {
+    display: flex;
+    flex-direction: column;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+}
+
+input[type="submit"] {
+    width: 100px;
+}

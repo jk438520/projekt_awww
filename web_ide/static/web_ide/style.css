@@ -1,0 +1,199 @@
+.light-theme {
+    --background: #e8e8e8;
+    --text: #000;
+    --text-light: #fff;
+    --nav-bar: #333;
+    --nav-bar-hover: #111;
+    --nav-bar-text: #fff;
+    --border-color: #ccc;
+}
+
+.dark-theme {
+    --background: #333;
+    --text: #fff;
+    --text-light: #000;
+    --nav-bar: #e8e8e8;
+    --nav-bar-hover: #ccc;
+    --nav-bar-text: #000;
+    --border-color: #ccc;
+}
+
+html {
+    height: 100%;
+}
+
+pre, code {
+    margin-top: 0;
+}
+
+
+.buttonBar {
+    display: flex;
+    align-content: stretch;
+    flex-direction: row;
+    height: 50px;
+    background-color: var(--nav-bar);
+}
+
+
+.buttonBar ul {
+    display: flex;
+    align-items: stretch;
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background-color: var(--nav-bar);
+}
+
+.buttonBar ul li {
+    display: flex;
+    align-items: stretch;
+    float: left;
+}
+
+.buttonBar ul li a {
+    color: var(--nav-bar-text);
+    display: flex;
+    align-items: center;
+    padding: 14px;
+    text-decoration: none;
+}
+
+.buttonBar ul li a:hover {
+    background-color: var(--nav-bar-hover);
+}
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    background-color: var(--background);
+    color: var(--text);
+}
+
+body {
+    margin: 0;
+    height: 100%;
+    display: grid;
+    grid-template-rows: 50px 3fr 50px 1fr;
+    grid-template-columns: 300px 5fr 2fr;
+}
+
+.topNavBar {
+    grid-column: 1/4;
+    grid-row: 1/2;
+}
+
+.fileMenu {
+    grid-column: 1/2;
+    grid-row: 2/5;
+    overflow-y: scroll;
+    border-right: var(--border-color) 5px solid;
+}
+
+.fileMenu ul{
+    list-style-type: none;
+    margin: 0;
+    padding-left: 10px;
+}
+
+
+
+.editor {
+    grid-column: 2/3;
+    grid-row: 2/3;
+    overflow-y: scroll;
+    padding: 10px;
+}
+
+.codeSnippet {
+    grid-column: 3/4;
+    grid-row: 2/3;
+    overflow-x: scroll;
+    overflow-y: scroll;
+    border-left: var(--border-color) 5px solid;
+    padding: 10px;
+}
+
+.bottomNavBar {
+    grid-column: 2/4;
+    grid-row: 3/4;
+}
+
+.tabContainer {
+    padding: 10px;
+    grid-column: 2/4;
+    grid-row: 4/5;
+    overflow-y: scroll;
+}
+
+.tab {
+    display: none;
+    flex-direction: column;
+}
+
+#tab1 {
+    display: block;
+}
+
+@media screen and (orientation: portrait) {
+
+    body {
+        margin: 0;
+        height: 100%;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: 50px 3fr 3fr 2fr 50px;
+    }
+
+    .topNavBar {
+        grid-column: 1/3;
+        grid-row: 1/2;
+    }
+
+    .editor {
+        grid-column: 1/3;
+        grid-row: 2/3;
+        overflow-y: scroll;
+    }
+
+    .codeSnippet {
+        grid-column: 1/3;
+        grid-row: 3/4;
+        border-left: none;
+        overflow-y: scroll;
+        border-top: var(--border-color) 5px solid;
+        border-bottom: var(--border-color) 5px solid;
+    }
+
+    .tabContainer {
+        grid-column: 1/2;
+        grid-row: 4/5;
+        overflow-y: scroll;
+    }
+
+    .fileMenu {
+        grid-column: 2/3;
+        grid-row: 4/5;
+        overflow-y: scroll;
+        border-right: none;
+        border-left: var(--border-color) 5px solid;
+    }
+
+    .bottomNavBar {
+        grid-column: 1/3;
+        grid-row: 5/6;
+
+    }
+}
+
+
+
+a[type="deleteButton"]:link, a[type="deleteButton"]:visited{
+    color: red;
+}
+a[type="additionButton"]:link, a[type="additionButton"]:visited{
+    color: green;
+}
+a[type="fileName"]:link, a[type="fileName"]:visited{
+    color: dodgerblue;
+}

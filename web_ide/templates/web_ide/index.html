@@ -1,0 +1,18 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Web IDE</title>
+    <link rel="stylesheet" href={%  static "web_ide/style.css" %}>
+    <script src={% static "web_ide/openTab.js" %}></script>
+</head>
+<body class="dark-theme">
+{% include "web_ide/nav_bar.html" %}
+{% include "web_ide/editor.html" %}
+{% include "web_ide/code_snippet.html" %}
+{% include "web_ide/file_menu.html" %}
+{% include "web_ide/tabs.html" %}
+</body>
+</html>

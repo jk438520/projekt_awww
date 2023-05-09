@@ -1,0 +1,25 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href={% static "web_ide/style.css" %}>
+    <link rel="stylesheet" href={% static "web_ide/file_mod.css" %}>
+    <title>Add File</title>
+</head>
+<body class="dark-theme">
+<div class="addDirectory">
+    <div class="createFile">
+        {% if parent_directory %}
+            <form action="{% url 'web_ide:add_directory' parent_directory.pk %}" method="post">
+        {% else %}
+            <form action="{% url 'web_ide:add_directory' %}" method="post">
+        {% endif %}
+        {% csrf_token %}
+        {{ add_directory_form.as_table }}
+        <input type="submit" value="Add Directory">
+        </form>
+    </div>
+</div>
+</body>
+</html>

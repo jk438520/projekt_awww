@@ -1,0 +1,15 @@
+<div class="fileMenu">
+    <div class="directoryBar">
+        /
+        <a type="additionButton" href="{% url 'web_ide:add_file' %}">[+F]</a>
+        <a type="additionButton" href="{% url 'web_ide:add_directory' %}">[+D]</a>
+    </div>
+    <ul>
+        {% for dir in file_system_dir_roots %}
+            {% include "web_ide/directory_in_menu.html" with file_system_object=dir %}
+        {% endfor %}
+        {% for file in file_system_file_roots %}
+            {% include "web_ide/file_in_menu.html" with file_system_object=file %}
+        {% endfor %}
+    </ul>
+</div>

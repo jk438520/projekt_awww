@@ -1,0 +1,13 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Document</title>
+    <link rel="stylesheet" href={% static "web_ide/style.css" %}>
+    <link rel="stylesheet" href="{% static 'web_ide/file_mod.css' %}">
+</head>
+<body class="dark-theme">
+{%  include 'web_ide/nav_bar.html' %}
+{% include 'web_ide/file_menu.html' %}
+</body>
