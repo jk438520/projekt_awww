@@ -91,6 +91,7 @@ class Directory(FileSystemObject):
 class File(FileSystemObject):
     content = models.TextField(blank=True, default='// this is content of file ' + str(super))
     compiled_content = models.TextField(blank=True, default='// this is compiled content of file ' + str(super))
+
     @classmethod
     def add_file_in_root(cls, name, owner, content="", description=""):
         if not FileSystemObject.objects.filter(
@@ -107,27 +108,32 @@ class File(FileSystemObject):
 
     def compile(self, standard, optimization, processor):
         # put content into file
-        source_code = open("source_code.c", "w")
-        source_code.write(self.content)
-        source_code.close()
-        # compile file using sdcc
-        sp = subprocess.run(["sdcc", "-S",
-                             "source_code.c",
-                             "-o", "compiled_code",
-                             processor,
-                             standard,
-                             optimization])
-        ret_code = sp.returncode
-        cmp_cnt = open("compiled_code", "r").read()
-        self.compiled_content = cmp_cnt
-        # remove files
-        os.remove("source_code.c")
-        os.remove("compiled_code")
+        with open("source_code.c", "w") as source_code:
+            source_code.write(self.content)
+            source_code.close()
+            # compile file using sdcc
+            sp = subprocess.Popen(["sdcc", "-S",
+                                   "source_code.c",
+                                   "-o", "compiled_code",
+                                   processor,
+                                   standard,
+                                   optimization], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            sp.wait()
+            if sp.returncode == 0:
+                # read compiled file
+                with open("compiled_code", "r") as compiled_code:
+                    self.compiled_content = compiled_code.read()
+                    compiled_code.close()
+                    os.remove("compiled_code")
+            else:
+                self.compiled_content = sp.stderr.read().decode("utf-8")
+            os.remove("source_code.c")
         self.save()
-        return ret_code
+        return
 
     def __str__(self):
         return self.name
+
 
 class FileSection(models.Model):
     name = models.CharField(max_length=200, blank=True, default='')

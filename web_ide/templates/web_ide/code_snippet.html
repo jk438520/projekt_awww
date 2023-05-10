@@ -1,5 +1,9 @@
 <div class="codeSnippet">
     {% if compilable %}
-        <pre>{{ file.compiled_content }}</pre>
+        {% for subdiv in compiled_stream %}
+            <div class="subdiv">
+                <pre>{{ subdiv }}</pre>
+            </div>
+        {% endfor %}
     {% endif %}
 </div>

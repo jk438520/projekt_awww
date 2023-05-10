@@ -114,6 +114,10 @@ body {
     padding: 10px;
 }
 
+.codeSnippet .subdiv:hover {
+    background: rgba(0,0,0,0.2);
+}
+
 .bottomNavBar {
     grid-column: 2/4;
     grid-row: 3/4;
