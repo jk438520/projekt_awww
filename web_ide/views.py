@@ -16,6 +16,17 @@ class IndexView(generic.View):
 
     @classmethod
     def get_context(cls, request):
+        if not request.user.is_authenticated:
+            return {
+                'file_system_dir_roots': Directory.objects.none(),
+                'file_system_file_roots': File.objects.none(),
+                'files': File.objects.none(),
+                'directories': Directory.objects.none(),
+                'standard_form': StandardForm(),
+                'optimization_form': OptimizationForm(),
+                'processor_form': ProcessorForm(),
+                'compile_form': CompileForm(),
+            }
         return {
             # parent directory is null, so this is a root directory
             'file_system_dir_roots': Directory.objects.filter(
@@ -39,29 +50,15 @@ class IndexView(generic.View):
         return render(request, self.template_name, context)
 
 
-def streamify_compiled_content(text: str):
-
-    acc = ''
-    cnt_lines = 0
-    for line in text.splitlines(True):
-        if line == ';--------------------------------------------------------\n':
-            if cnt_lines == 2:
-                yield acc
-                acc = ''
-                cnt_lines = 0
-            cnt_lines += 1
-        acc += line
-    yield acc
-
-
 class FileView(generic.View):
     template_name = 'web_ide/index.html'
 
     def get_context(self, request, pk):
         context = IndexView.get_context(request=request)
         context['file'] = File.objects.get(pk=pk)
+        context['file_by_sections'] = context['file'].get_content_by_section()
         context['compilable'] = True
-        context['compiled_stream'] = streamify_compiled_content(context['file'].compiled_content)
+        context['compiled_stream'] = context['file'].get_streamified_compiled_content()
         return context
 
     def get(self, request, pk):
@@ -121,7 +118,7 @@ class AddFileForm(forms.Form):
     name = CharField(label='Name', max_length=100)
     description = CharField(label='Description', max_length=100, required=False)
     # allow new lines in content
-    content = CharField(label='Content', widget=Textarea)
+    content = CharField(label='Content', widget=Textarea, required=False)
 
 
 class AddFileView(generic.View):

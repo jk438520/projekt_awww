@@ -1,4 +1,5 @@
 <div class="fileMenu">
+{% if user.is_authenticated %}
     <div class="directoryBar">
         /
         <a type="additionButton" href="{% url 'web_ide:add_file' %}">[+F]</a>
@@ -12,4 +13,5 @@
             {% include "web_ide/file_in_menu.html" with file_system_object=file %}
         {% endfor %}
     </ul>
+{% endif %}
 </div>

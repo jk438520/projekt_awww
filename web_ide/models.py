@@ -103,6 +103,27 @@ class File(FileSystemObject):
             new_file.save()
             return new_file
 
+    def section_content(self):
+        if self.content == "" or self.content is None:
+            return
+        for section in FileSection.objects.filter(file=self):
+            section.delete()
+        begin = 0
+        end = 0
+        cnt = 0
+        for line in self.content.splitlines(True):
+            cnt_b = line.count('{')
+            cnt_e = line.count('}')
+            cnt = cnt + cnt_b - cnt_e
+            if cnt_e > 0 and cnt == 0:
+                FileSection.objects.create(file=self, begin=begin, end=end).save()
+                begin = end + 1
+            end += 1
+        if begin != end:
+            FileSection.objects.create(file=self, begin=begin, end=end-1).save()
+
+        return
+
     def is_directory(self):
         return False
 
@@ -131,6 +152,43 @@ class File(FileSystemObject):
         self.save()
         return
 
+    def get_streamified_compiled_content(self):
+        acc = ''
+        cnt_lines = 0
+        for line in self.compiled_content.splitlines(True):
+            if line == ';--------------------------------------------------------\n':
+                if cnt_lines == 2:
+                    yield acc
+                    acc = ''
+                    cnt_lines = 0
+                cnt_lines += 1
+            acc += line
+        yield acc
+
+    def get_content_by_section(self):
+        sections = FileSection.objects.filter(file=self)
+        if sections.count() == 0:
+            return [self.content]
+        index = 0
+        lines = self.content.splitlines(True)
+        acc = ''
+        ret = []
+        for line, li in zip(lines, range(len(lines))):
+            if li == 0 or index >= sections.count():
+                acc += line
+                continue
+            if li == sections[index].begin:
+                ret.append(acc)
+                acc = ''
+            acc += line
+            if li == sections[index].end:
+                index += 1
+                ret.append(acc)
+                acc = ''
+        if acc != '':
+            ret.append(acc)
+        return ret
+
     def __str__(self):
         return self.name
 
@@ -138,12 +196,14 @@ class File(FileSystemObject):
 class FileSection(models.Model):
     name = models.CharField(max_length=200, blank=True, default='')
     description = models.CharField(max_length=200, blank=True, default='')
-    creation_date = models.DateTimeField('date created')
-    first_line = models.IntegerField()
-    last_line = models.IntegerField()
+    creation_date = models.DateTimeField('date created', default=timezone.now)
+    begin = models.IntegerField()
+    end = models.IntegerField()
 
     file = models.ForeignKey('File', on_delete=models.CASCADE)
 
+    def __str__(self):
+        return "file: "+str(self.file)+" section: "+str(self.begin)+"-"+str(self.end)
 
 class FileSectionType(models.Model):
     TYPE_CHOICES = [

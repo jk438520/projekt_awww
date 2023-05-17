@@ -1,5 +1,9 @@
 <div class="editor">
     {% if file in files %}
-        <pre>{{ file.content }}</pre>
+        {% for subdiv in file_by_sections %}
+            <div class="subdiv">
+                <pre><code>{{ subdiv }}</code></pre>
+            </div>
+        {% endfor %}
     {% endif %}
 </div>
