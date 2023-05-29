@@ -31,13 +31,6 @@ class FileSystemObject(models.Model):
     def children_directories(self):
         return Directory.objects.filter(parent_directory=self, availability=True)
 
-    def delete(self, using=None, keep_parents=False):
-        self.availability = False
-        self.availability_change_date = timezone.now()
-        self.save()
-        for child in self.children():
-            child.delete()
-
     @abstractmethod
     def is_directory(self):
         pass
@@ -82,15 +75,25 @@ class Directory(FileSystemObject):
                 content=content,
                 parent_directory=self)
             new_file.save()
+            new_file.section_content()
             return new_file
 
     def is_directory(self):
         return True
 
+    def delete(self, using=None, keep_parents=False):
+        self.availability = False
+        self.availability_change_date = timezone.now()
+        self.save()
+        for child in File.objects.filter(parent_directory=self):
+            child.delete()
+        for child in Directory.objects.filter(parent_directory=self):
+            child.delete()
+
 
 class File(FileSystemObject):
     content = models.TextField(blank=True, default='// this is content of file ' + str(super))
-    compiled_content = models.TextField(blank=True, default='// this is compiled content of file ' + str(super))
+    compiled_content = models.TextField(blank=True, default="")
 
     @classmethod
     def add_file_in_root(cls, name, owner, content="", description=""):
@@ -101,6 +104,7 @@ class File(FileSystemObject):
                 parent_directory=None).exists():
             new_file = File(name=name, owner=owner, content=content, description=description)
             new_file.save()
+            new_file.section_content()
             return new_file
 
     def section_content(self):
@@ -120,12 +124,17 @@ class File(FileSystemObject):
                 begin = end + 1
             end += 1
         if begin != end:
-            FileSection.objects.create(file=self, begin=begin, end=end-1).save()
+            FileSection.objects.create(file=self, begin=begin, end=end - 1).save()
 
         return
 
     def is_directory(self):
         return False
+
+    def delete(self, using=None, keep_parents=False):
+        self.availability = False
+        self.availability_change_date = timezone.now()
+        self.save()
 
     def compile(self, standard, optimization, processor):
         # put content into file
@@ -152,18 +161,20 @@ class File(FileSystemObject):
         self.save()
         return
 
-    def get_streamified_compiled_content(self):
+    def get_compiled_content_by_section(self):
+        ret = []
         acc = ''
         cnt_lines = 0
         for line in self.compiled_content.splitlines(True):
             if line == ';--------------------------------------------------------\n':
                 if cnt_lines == 2:
-                    yield acc
+                    ret.append(acc)
                     acc = ''
                     cnt_lines = 0
                 cnt_lines += 1
             acc += line
-        yield acc
+        ret.append(acc)
+        return ret
 
     def get_content_by_section(self):
         sections = FileSection.objects.filter(file=self)
@@ -177,11 +188,11 @@ class File(FileSystemObject):
             if li == 0 or index >= sections.count():
                 acc += line
                 continue
-            if li == sections[index].begin:
+            if li == sections[index].begin and acc != '':
                 ret.append(acc)
                 acc = ''
             acc += line
-            if li == sections[index].end:
+            if li == sections[index].end and acc != '':
                 index += 1
                 ret.append(acc)
                 acc = ''
@@ -203,7 +214,8 @@ class FileSection(models.Model):
     file = models.ForeignKey('File', on_delete=models.CASCADE)
 
     def __str__(self):
-        return "file: "+str(self.file)+" section: "+str(self.begin)+"-"+str(self.end)
+        return "file: " + str(self.file) + " section: " + str(self.begin) + "-" + str(self.end)
+
 
 class FileSectionType(models.Model):
     TYPE_CHOICES = [

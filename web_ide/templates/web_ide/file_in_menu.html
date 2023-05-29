@@ -1,6 +1,6 @@
-<li class="FileSystemObject">
+<li id="fso{{ file_system_object.pk }}" class="FileSystemObject">
     <div class="fileSystemObjectBar">
-        <a type="fileName" href="{% url "web_ide:file" file_system_object.pk %}">{{ file_system_object.name }}</a>
+        <a type="fileName" onclick="render_file({{ file_system_object.pk }})">{{ file_system_object.name }}</a>
         {% include "web_ide/delete_button.html" with file_system_object=file_system_object %}
     </div>
 </li>

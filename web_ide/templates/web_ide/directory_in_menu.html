@@ -1,5 +1,4 @@
-<li class="FileSystemObject">
-
+<li id="fso{{ file_system_object.pk }}" class="FileSystemObject">
     <div class="fileSystemObjectBar">
         <a class="directoryName">{{ file_system_object.name }}</a>
         <a type='additionButton' href="{% url 'web_ide:add_file' file_system_object.pk %}">[+F]</a>

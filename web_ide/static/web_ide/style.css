@@ -75,7 +75,7 @@ body {
     height: 100%;
     display: grid;
     grid-template-rows: 50px 3fr 50px 1fr;
-    grid-template-columns: 300px 5fr 2fr;
+    grid-template-columns: 300px 5fr 3fr;
 }
 
 .topNavBar {
@@ -120,6 +120,21 @@ body {
 
 .editor .subdiv:hover {
     background: rgba(0,0,0,0.2);
+}
+
+.subdiv {
+    text-overflow: clip;
+    overflow: hidden;
+}
+
+.subdiv pre {
+    height: 100%;
+    text-overflow: clip;
+}
+
+.subdiv pre code {
+    height: 100%;
+    text-overflow: clip;
 }
 
 .bottomNavBar {
@@ -196,12 +211,12 @@ body {
 
 
 
-a[type="deleteButton"]:link, a[type="deleteButton"]:visited{
+a[type="deleteButton"]{
     color: red;
 }
 a[type="additionButton"]:link, a[type="additionButton"]:visited{
     color: green;
 }
-a[type="fileName"]:link, a[type="fileName"]:visited{
+a[type="fileName"]{
     color: dodgerblue;
 }

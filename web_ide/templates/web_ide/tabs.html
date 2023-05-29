@@ -3,29 +3,23 @@
         <li><a onclick="openTab('tab', 'standard')">Standard</a></li>
         <li><a onclick="openTab('tab', 'optimization')">Optimizations</a></li>
         <li><a onclick="openTab('tab', 'processor')">Processor</a></li>
-        {% if compilable %}
-            <li><a onclick="openTab('tab', 'compile')">Compile</a></li>
-        {% endif %}
+        <li><a onclick="openTab('tab', 'compile')">Compile</a></li>
     </ul>
 </div>
 <div class="tabContainer">
-    {% if file %}
-        <form action="{% url "web_ide:file" file.pk %}" method="post">
-    {% else %}
-        <form>
-    {% endif %}
-    {% csrf_token %}
-    <div id="standard" class="tab">
-        {{ compile_form.standard }}
-    </div>
-    <div id="optimization" class="tab">
-        {{ compile_form.optimization }}
-    </div>
-    <div id="processor" class="tab">
-        {{ compile_form.processor }}
-    </div>
-    <div id="compile" class="tab">
-        <input type="submit" value="Compile">
-    </div>
+    <form id="compileForm">
+        {% csrf_token %}
+        <div id="standard" class="tab">
+            {{ compile_form.standard }}
+        </div>
+        <div id="optimization" class="tab">
+            {{ compile_form.optimization }}
+        </div>
+        <div id="processor" class="tab">
+            {{ compile_form.processor }}
+        </div>
+        <div id="compile" class="tab">
+            <button type="button" onclick="compile()">Compile</button>
+        </div>
     </form>
 </div>

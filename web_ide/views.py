@@ -1,11 +1,12 @@
 from django.forms import forms, CharField, Textarea, CharField, Textarea, ModelForm, Select, BooleanField
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect, HttpResponseBadRequest
 from django.shortcuts import render
 from django import template
 from django.urls import reverse
 from django.views import generic
 from django.contrib.auth.models import User
 from web_ide.models import *
+import json
 
 
 # Create your views here.
@@ -49,35 +50,30 @@ class IndexView(generic.View):
         context = self.get_context(request)
         return render(request, self.template_name, context)
 
+    def post(self, request):
+        pass
+
 
 class FileView(generic.View):
     template_name = 'web_ide/index.html'
 
     def get_context(self, request, pk):
         context = IndexView.get_context(request=request)
-        context['file'] = File.objects.get(pk=pk)
-        context['file_by_sections'] = context['file'].get_content_by_section()
-        context['compilable'] = True
         context['compiled_stream'] = context['file'].get_streamified_compiled_content()
         return context
 
+    def get_file_info(self, request, pk):
+        file = File.objects.get(pk=pk)
+        return {
+            'name': file.name,
+            'description': file.description,
+            'owner': file.owner.username,
+            'content_by_section': file.get_content_by_section(),
+            'compiled_by_section': file.get_compiled_content_by_section(),
+        }
+
     def get(self, request, pk):
-        return render(request, self.template_name, self.get_context(request=request, pk=pk))
-
-    def post(self, request, pk):
-        context = self.get_context(request=request, pk=pk)
-        form = StandardForm(request.POST)
-        if not form.is_valid():
-            return render(request, self.template_name, context)
-        context['compiled'] = True
-        standard = request.POST.get('standard')
-        processor = request.POST.get('processor')
-        optimization = request.POST.get('optimization')
-
-        context['file'].compile(standard=standard, optimization=optimization,
-                                              processor=processor)
-        return HttpResponseRedirect(reverse('web_ide:file', args=(pk,)))
-
+        return HttpResponse(json.dumps(self.get_file_info(request=request, pk=pk)))
 
 
 class AddDirectoryForm(forms.Form):
@@ -143,31 +139,35 @@ class AddFileView(generic.View):
             description = form.cleaned_data['description']
             content = form.cleaned_data['content']
             parent_directory = Directory.objects.get(pk=pk) if pk else None
-            new_file = None
             if parent_directory:
-                new_file = parent_directory.add_file(name=name, description=description, content=content,
-                                                     owner=request.user)
+                parent_directory.add_file(name=name, description=description, content=content,
+                                          owner=request.user)
             else:
-                new_file = File.add_file_in_root(name=name, description=description, content=content,
-                                                 owner=request.user)
-            # redirect to /web_ide/<file_id>/
-            if new_file:
-                return HttpResponseRedirect(reverse('web_ide:file', args=(new_file.id,)))
-            else:
-                return HttpResponseRedirect(reverse('web_ide:index'))
-
-
+                File.add_file_in_root(name=name, description=description, content=content,
+                                      owner=request.user)
+            return HttpResponseRedirect(reverse('web_ide:index'))
         else:
-            context['add_file_form'] = form
             return render(request, self.template_name, context)
 
 
 class DeleteView(generic.View):
 
-    def get(self, request, pk):
-        file_system_object = FileSystemObject.objects.get(pk=pk)
-        file_system_object.delete()
-        return HttpResponseRedirect(reverse('web_ide:index'))
+    def get(self, request, pk, current_file=None):
+        try:
+            fso = File.objects.filter(pk=pk)
+            if not fso:
+                fso = Directory.objects.get(pk=pk)
+            else:
+                fso = fso[0]
+
+            fso.delete()
+
+            removed = False
+            if current_file:
+                removed = not FileSystemObject.objects.get(pk=current_file).availability
+            return HttpResponse(json.dumps({'success': True, 'removed': removed}))
+        except FileSystemObject.DoesNotExist:
+            return HttpResponse(json.dumps({'success': False}))
 
 
 class AddOrRemoveTreeView(generic.View):
@@ -214,3 +214,22 @@ class CompileForm(forms.Form):
     standard = CharField(label='Standard', widget=Select(choices=STANDARD_CHOICES))
     optimization = CharField(label='Optimization', widget=Select(choices=OPTIMIZATION_CHOICES))
     processor = CharField(label='Processor', widget=Select(choices=PROCESSOR_CHOICES))
+
+
+class CompileView(generic.View):
+    def post(self, request, pk):
+        file = File.objects.get(pk=pk)
+        if not file:
+            return HttpResponseBadRequest()
+        form = CompileForm(request.POST)
+        if not form.is_valid():  # respond with 400
+            return HttpResponseBadRequest()
+        standard = request.POST.get('standard')
+        processor = request.POST.get('processor')
+        optimization = request.POST.get('optimization')
+
+        file.compile(standard=standard, processor=processor, optimization=optimization)
+
+        return HttpResponse(json.dumps(
+            {'compiled_by_section': file.get_compiled_content_by_section()})
+            , content_type='application/json')
