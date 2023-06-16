@@ -1,9 +1,0 @@
-<div class="topNavBar buttonBar">
-    <ul>
-        <li><a href="{% url 'web_ide:index' %}">Home</a></li>
-        {% if user.is_authenticated %}
-        <li><a href="{% url 'web_ide:add_or_remove_tree' %}">Add or Delete</a></li>
-        {% endif %}
-        <li><a href="{% url 'login' %}">Log In</a></li>
-    </ul>
-</div>

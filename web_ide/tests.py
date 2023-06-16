@@ -4,24 +4,16 @@ from django.test import TestCase, RequestFactory
 from web_ide.models import *
 from web_ide.views import *
 
-from django.contrib.auth.models import User
 
-
-# Create your tests here.
-
-
-class DirectoryTests(TestCase):
-
-    def setUp(self):
-        self.user = User.objects.create_user(username='test_user123')
+class DirectoryTest(TestCase):
 
     def test_create_with_same_name(self):
-        self.assertTrue(Directory.add_directory_in_root(name="test", owner=self.user))
-        self.assertIsNone(Directory.add_directory_in_root(name="test", owner=self.user))
+        self.assertTrue(Directory.add_directory_in_root(name="test"))
+        self.assertIsNone(Directory.add_directory_in_root(name="test"))
 
     def test_dir_in_dir(self):
-        dir = Directory.add_directory_in_root(name="test", owner=self.user)
-        self.assertTrue(dir.add_directory(name="test2", owner=self.user))
+        dir = Directory.add_directory_in_root(name="test")
+        self.assertTrue(dir.add_directory(name="test2"))
         self.assertEqual(dir.children_directories().count(), 1)
         self.assertEqual(dir.children_directories()[0].name, "test2")
 
@@ -44,43 +36,37 @@ int main() {
 }"""
 
 
-class FileTests(TestCase):
-
-    def setUp(self):
-        self.user = User.objects.create_user(username='test_user123')
+class FileTest(TestCase):
 
     def test_create_with_same_name(self):
-        self.assertTrue(File.add_file_in_root(name="test", owner=self.user))
-        self.assertIsNone(File.add_file_in_root(name="test", owner=self.user))
+        self.assertTrue(File.add_file_in_root(name="test"))
+        self.assertIsNone(File.add_file_in_root(name="test"))
 
     def test_file_in_dir(self):
-        dir = Directory.add_directory_in_root(name="test", owner=self.user)
-        self.assertTrue(dir.add_file(name="test2", owner=self.user, content=example_content))
+        dir = Directory.add_directory_in_root(name="test")
+        self.assertTrue(dir.add_file(name="test2", content=example_content))
         self.assertEqual(dir.children_files().count(), 1)
         self.assertEqual(dir.children_files()[0].name, "test2")
         self.assertEqual(dir.children_files()[0].content, example_content)
 
     def test_files_in_different_dirs(self):
-        dir1 = Directory.add_directory_in_root(name="dir1", owner=self.user)
-        dir2 = Directory.add_directory_in_root(name="dir2", owner=self.user)
-        self.assertTrue(dir1.add_file("file", self.user, example_content))
-        self.assertTrue(dir2.add_file("file", self.user, example_content))
+        dir1 = Directory.add_directory_in_root(name="dir1")
+        dir2 = Directory.add_directory_in_root(name="dir2")
+        self.assertTrue(dir1.add_file("file", example_content))
+        self.assertTrue(dir2.add_file("file", example_content))
 
 
 class DeleteTests(TestCase):
 
-    def setUp(self):
-        self.user = User.objects.create_user(username='test_user123')
-
     def test_delete_file(self):
-        file = File.add_file_in_root('file', self.user, example_content)
+        file = File.add_file_in_root('file', example_content)
         self.assertTrue(file.availability)
         file.delete()
         self.assertFalse(file.availability)
 
     def test_delete_directory_with_file(self):
-        dir = Directory.add_directory_in_root(name="dir1", owner=self.user)
-        file = dir.add_file("file", self.user, example_content)
+        dir = Directory.add_directory_in_root(name="dir1")
+        file = dir.add_file("file", example_content)
         self.assertTrue(dir.availability)
         self.assertTrue(file.availability)
         dir.delete()
@@ -92,106 +78,73 @@ class DeleteTests(TestCase):
 
 class SectionTest(TestCase):
 
-    def setUp(self):
-        self.user = User.objects.create_user(username='test_user123')
-
     def test_auto_section(self):
-        file = File.add_file_in_root('file', self.user, example_content)
-        file.section_content()
-        sections = file.get_content_by_section()
+        file = File.add_file_in_root('file', example_content)
+        sections = file.get_content_by_sections()
         self.assertEqual(example_content, reduce(lambda x, y: x + y, sections, ""))
         for section in sections:
             self.assertTrue(section in example_content)
 
 
-class IndexTest(TestCase):
+class CompileTest(TestCase):
+
+    def test_compile(self):
+        file = File.add_file_in_root('file', example_content)
+        file.compile([])
+        self.assertTrue(file.compiled_content != "")
+        self.assertTrue(file.compiled_content is not None)
+
+    def test_different_compiles(self):
+        file = File.add_file_in_root('file', example_content)
+        args = ['--std-c89', '--opt-code-size', '--opt-code-speed', '--no-peep', '-mds390', '--24-bit', '--stack-10bit']
+        file.compile(args)
+        compile1 = file.compiled_content
+        args = ['--std-c89', '--opt-code-size', '--opt-code-speed', '--no-peep', '-mmcs51', '--model-medium']
+        file.compile(args)
+        compile2 = file.compiled_content
+        self.assertNotEqual(compile1, compile2)
+
+
+class ApiTreeTest(TestCase):
 
     def setUp(self):
-        self.user = User.objects.create_user(username='test_user123')
 
-    def test_index(self):
-        self.client.login(username='test_user123', password='test_user123')
-        response = self.client.get('/web_ide/')
+        dir1 = Directory.add_directory_in_root(name="dir1")
+        dir2 = Directory.add_directory_in_root(name="dir2")
+        dir1.add_file("file", example_content)
+        dir2.add_file("file", example_content)
+
+    def test_basic(self):
+        response = self.client.get('/web_ide/file_tree/')
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, 'web_ide/index.html')
+        expected = {'root': {'children_directories': [
+            {'type': 'directory', 'pk': 1, 'name': 'dir1', 'description': '', 'children_directories': [],
+             'children_files': [{'type': 'file', 'pk': 3, 'name': 'file', 'description': ''}]},
+            {'type': 'directory', 'pk': 2, 'name': 'dir2', 'description': '', 'children_directories': [],
+             'children_files': [{'type': 'file', 'pk': 4, 'name': 'file', 'description': ''}]}], 'children_files': []}}
 
+        self.assertEqual(response.json(), expected)
 
-class DeleteViewTest(TestCase):
-
-    def setUp(self):
-        self.user = User.objects.create_user(username='test_user123')
-
-    def test_delete_file(self):
-        file = File.add_file_in_root('file', self.user, example_content)
-        response = self.client.get('/web_ide/delete/' + str(file.pk) + '/')
-        file = File.objects.get(pk=file.pk)
-        self.assertFalse(file.availability)
-
-    def test_delete_directory_with_file(self):
-        dir = Directory.add_directory_in_root(name="dir1", owner=self.user)
-        file = dir.add_file("file", self.user, example_content)
-        self.client.get('/web_ide/delete/' + str(dir.pk) + '/')
-        dir = Directory.objects.get(pk=dir.pk)
-        file = File.objects.get(pk=file.pk)
-        self.assertFalse(dir.availability)
-        self.assertFalse(file.availability)
-
-
-class AddFileViewTest(TestCase):
+class ApiFileTest(TestCase):
 
     def setUp(self):
-        self.user = User.objects.create_user(username='test_user123')
-        self.factory = RequestFactory()
+        self.file = File.add_file_in_root('file', example_content)
 
-    def test_add_file(self):
-        request = self.factory.post('/web_ide/add_file/', {'name': 'test_file', 'content': example_content})
-        request.user = self.user
-        AddFileView.as_view()(request)
-        self.assertEqual(len(File.objects.filter(name='test_file')), 1)
+    def test_get(self):
+        self.maxDiff = None
+        response = self.client.get('/web_ide/file/1/')
+        self.assertEqual(response.status_code, 200)
+        print("this is response: ", response.json())
+        expected = {'pk': 1, 'name': 'file', 'description': '', 'content': example_content, 'compiled_content': "", 'compiled_content_by_sections': ['']}
+        response_data = response.json()
+        response_data.pop('content_by_sections')
+        self.assertEqual(response_data, expected)
 
-    def test_add_file_with_existing_name(self):
-        File.add_file_in_root('test_file', self.user, example_content)
-        self.test_add_file()
-
-
-class AddDirectoryViewTest(TestCase):
+class ApiCompileTest(TestCase):
 
     def setUp(self):
-        self.user = User.objects.create_user(username='test_user123')
-        self.factory = RequestFactory()
+        self.file = File.add_file_in_root('file', example_content)
 
-    def test_add_directory(self):
-        request = self.factory.post('/web_ide/add_directory/', {'name': 'test_dir'})
-        request.user = self.user
-        AddDirectoryView.as_view()(request)
-        self.assertEqual(len(Directory.objects.filter(name='test_dir')), 1)
-
-    def test_add_directory_with_existing_name(self):
-        Directory.add_directory_in_root('test_dir', self.user)
-        self.test_add_directory()
-
-
-class TestCompileView(TestCase):
-
-    def setUp(self):
-        self.user = User.objects.create_user(username='test_user123')
-        self.factory = RequestFactory()
-
-    def test_compile_no_args(self):
-        file = File.add_file_in_root('file', self.user, example_content)
-        self.assertEqual(file.compiled_content, "")
-        request = self.factory.post('/web_ide/compile/' + str(file.pk) + '/', {})
-        request.user = self.user
-        CompileView.as_view()(request, pk=file.pk)
-        file = File.objects.get(pk=file.pk)
-        self.assertEqual(file.compiled_content, "")
-
-    def test_compile_with_args(self):
-        file = File.add_file_in_root('file', self.user, example_content)
-        self.assertEqual(file.compiled_content, "")
-        request = self.factory.post('/web_ide/compile/' + str(file.pk) + '/',
-                                    {'standard': '--std-c11', 'optimization': '--opt-code-size', 'processor': '-mmcs51'})
-        request.user = self.user
-        CompileView.as_view()(request, pk=file.pk)
-        file = File.objects.get(pk=file.pk)
-        self.assertNotEquals(file.compiled_content, "")
+    def test_post(self):
+        response = self.client.post("/web_ide/compile/", data={'pk': 1, 'args': ['--std-c89', '--opt-code-size', '--opt-code-speed', '--no-peep', '-mds390', '--24-bit', '--stack-10bit']})
+        print(response.json())

@@ -4,6 +4,7 @@ from abc import abstractmethod
 from django.db import models
 from django.utils import timezone
 from django.contrib.auth.models import User
+from django.db.models.signals import post_save
 import os
 
 
@@ -13,7 +14,6 @@ class FileSystemObject(models.Model):
     name = models.CharField(max_length=200)
     description = models.CharField(max_length=200, blank=True)
     creation_date = models.DateTimeField('date created', default=timezone.now)
-    owner = models.ForeignKey(User, on_delete=models.CASCADE)
     availability = models.BooleanField(default=True)
     availability_change_date = models.DateTimeField('date of last availability change', blank=True, null=True)
     content_change_date = models.DateTimeField('date of last content change', default=timezone.now)
@@ -39,38 +39,34 @@ class FileSystemObject(models.Model):
 class Directory(FileSystemObject):
 
     @classmethod
-    def add_directory_in_root(cls, name, owner, description=""):
+    def add_directory_in_root(cls, name, description=""):
         if not FileSystemObject.objects.filter(
                 availability=True,
-                owner=owner,
                 name=name,
                 description=description,
                 parent_directory=None).exists():
-            new_directory = Directory(name=name, owner=owner, description=description)
+            new_directory = Directory(name=name, description=description)
             new_directory.save()
             return new_directory
 
-    def add_directory(self, name, owner, description="", ):
+    def add_directory(self, name, description="", ):
         # ensure that the directory does not already exist
         if not FileSystemObject.objects.filter(
                 availability=True,
                 name=name,
-                owner=owner,
                 parent_directory=self).exists():
-            new_directory = Directory(name=name, owner=owner, description=description, parent_directory=self)
+            new_directory = Directory(name=name, description=description, parent_directory=self)
             new_directory.save()
             return new_directory
 
-    def add_file(self, name, owner, content="", description=""):
+    def add_file(self, name, content="", description=""):
         # ensure that the file does not already exist
         if not FileSystemObject.objects.filter(
                 availability=True,
                 name=name,
-                owner=owner,
                 parent_directory=self).exists():
             new_file = File(
                 name=name,
-                owner=owner,
                 description=description,
                 content=content,
                 parent_directory=self)
@@ -82,6 +78,7 @@ class Directory(FileSystemObject):
         return True
 
     def delete(self, using=None, keep_parents=False):
+        print("deleting directory " + self.name)
         self.availability = False
         self.availability_change_date = timezone.now()
         self.save()
@@ -90,22 +87,40 @@ class Directory(FileSystemObject):
         for child in Directory.objects.filter(parent_directory=self):
             child.delete()
 
+    def generate_subtree(self):
+        ret = {
+            'type': 'directory',
+            'pk': self.pk,
+            'name': self.name,
+            'description': self.description,
+            'children_directories': [],
+            'children_files': []
+        }
+        for child in self.children_directories().filter(availability=True):
+            ret['children_directories'].append(child.generate_subtree())
+        for child in self.children_files().filter(availability=True):
+            ret['children_files'].append(child.generate_subtree())
+        return ret
+
 
 class File(FileSystemObject):
     content = models.TextField(blank=True, default='// this is content of file ' + str(super))
     compiled_content = models.TextField(blank=True, default="")
 
     @classmethod
-    def add_file_in_root(cls, name, owner, content="", description=""):
+    def add_file_in_root(cls, name, content="", description=""):
         if not FileSystemObject.objects.filter(
                 availability=True,
                 name=name,
-                owner=owner,
                 parent_directory=None).exists():
-            new_file = File(name=name, owner=owner, content=content, description=description)
+            new_file = File(name=name, content=content, description=description)
             new_file.save()
             new_file.section_content()
             return new_file
+
+    @staticmethod
+    def post_save(sender, instance, created, **kwargs):
+        instance.section_content()
 
     def section_content(self):
         if self.content == "" or self.content is None:
@@ -125,7 +140,6 @@ class File(FileSystemObject):
             end += 1
         if begin != end:
             FileSection.objects.create(file=self, begin=begin, end=end - 1).save()
-
         return
 
     def is_directory(self):
@@ -136,32 +150,45 @@ class File(FileSystemObject):
         self.availability_change_date = timezone.now()
         self.save()
 
-    def compile(self, standard, optimization, processor):
-        # put content into file
-        with open("source_code.c", "w") as source_code:
+    def compile(self, args):
+        print(args)
+        sc_filename = self.name + ".c"
+        asm_filename = self.name + ".asm"
+        ret = {
+            'compilation_success': False,
+            'stdout': '',
+            'stderr': ''
+        }
+        with open(sc_filename, "w") as source_code:
             source_code.write(self.content)
             source_code.close()
             # compile file using sdcc
-            sp = subprocess.Popen(["sdcc", "-S",
-                                   "source_code.c",
-                                   "-o", "compiled_code",
-                                   processor,
-                                   standard,
-                                   optimization], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            sp = subprocess.Popen(["sdcc", "-S", sc_filename, "-o", asm_filename,
+                                   ] + args,)
             sp.wait()
             if sp.returncode == 0:
-                # read compiled file
-                with open("compiled_code", "r") as compiled_code:
+                with open(asm_filename, "r") as compiled_code:
                     self.compiled_content = compiled_code.read()
                     compiled_code.close()
-                    os.remove("compiled_code")
+                os.remove(asm_filename)
             else:
-                self.compiled_content = sp.stderr.read().decode("utf-8")
-            os.remove("source_code.c")
+                self.compiled_content = ""
+            os.remove(sc_filename)
+            ret['compilation_success'] = sp.returncode == 0
+            ret['stdout'] = sp.stdout
+            ret['stderr'] = sp.stderr
         self.save()
-        return
+        return ret
 
-    def get_compiled_content_by_section(self):
+    def generate_subtree(self):
+        return {
+            'type': 'file',
+            'pk': self.pk,
+            'name': self.name,
+            'description': self.description
+        }
+
+    def get_compiled_content_by_sections(self):
         ret = []
         acc = ''
         cnt_lines = 0
@@ -176,7 +203,7 @@ class File(FileSystemObject):
         ret.append(acc)
         return ret
 
-    def get_content_by_section(self):
+    def get_content_by_sections(self):
         sections = FileSection.objects.filter(file=self)
         if sections.count() == 0:
             return [self.content]
@@ -204,6 +231,23 @@ class File(FileSystemObject):
         return self.name
 
 
+post_save.connect(File.post_save, sender=File)
+
+
+def generate_file_tree():
+    ret = {
+        'root': {
+            'children_directories': [],
+            'children_files': []
+        }
+    }
+    for child in Directory.objects.filter(parent_directory=None, availability=True):
+        ret['root']['children_directories'].append(child.generate_subtree())
+    for child in File.objects.filter(parent_directory=None, availability=True):
+        ret['root']['children_files'].append(child.generate_subtree())
+    return ret
+
+
 class FileSection(models.Model):
     name = models.CharField(max_length=200, blank=True, default='')
     description = models.CharField(max_length=200, blank=True, default='')
@@ -215,32 +259,3 @@ class FileSection(models.Model):
 
     def __str__(self):
         return "file: " + str(self.file) + " section: " + str(self.begin) + "-" + str(self.end)
-
-
-class FileSectionType(models.Model):
-    TYPE_CHOICES = [
-        ('PROC', 'procedure'),
-        ('COMM', 'comment'),
-        ('COMP_DIR', 'compiler directive'),
-        ('VAR_DEC', 'variable declaration'),
-        ('ASM_CODE', 'assembly code'),
-    ]
-    type = models.CharField(max_length=200, choices=TYPE_CHOICES)
-    section = models.ForeignKey('FileSection', on_delete=models.CASCADE)
-
-
-class FileSectionStatus(models.Model):
-    STATUS_CHOICES = [
-        ('C', 'compiles without warnings'),
-        ('WC', 'compiles with warnings'),
-        ('NC', 'does not compile'),
-    ]
-    status = models.CharField(max_length=200, choices=STATUS_CHOICES)
-
-
-section = models.ForeignKey('FileSection', on_delete=models.CASCADE)
-
-
-class FileSectionStatusData(models.Model):
-    data = models.CharField(max_length=200)
-    section = models.ForeignKey('FileSection', on_delete=models.CASCADE)
